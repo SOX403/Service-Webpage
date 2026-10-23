@@ -1,0 +1,17 @@
+# Normalize line endings: Git decides for text files, Windows scripts stay CRLF.
+* text=auto
+
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.py  text eol=lf
+*.js  text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md  text eol=lf
+
+# Binary assets: never touched by line-ending conversion.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.webp binary
+*.ttf  binary
