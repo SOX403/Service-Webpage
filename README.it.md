@@ -2,22 +2,21 @@
 
 [English](README.md)
 
-Pagina iniziale personale con interfaccia in stile cyber, composta da due pagine di collegamenti ai servizi (schede raggruppate in sezioni). Funziona interamente nel browser: nessun server, nessun account, nessuna compilazione.
+Start page personalizzabile con interfaccia in stile cyber, composta da due pagine di collegamenti a servizi scelti e aggiunti dall'utente (i collegamenti aggiunti sono raggruppati in sezioni; ogni pagina ha propri servizi e sezioni). Funziona interamente nel browser: nessun server, nessun account, nessuna compilazione.
 
 ## Funzioni
 
-- Due pagine di collegamenti, selezionabili dalla barra di navigazione. Ogni pagina ha i propri servizi.
-- Modalità modifica: aggiunta, modifica, eliminazione e riordino delle schede trascinandole. Un'opzione di blocco ("FISSA") congela la disposizione.
+- Modalità modifica: aggiunta, modifica, eliminazione e riordino delle schede trascinandole. Il pulsante "FISSA" congela le modifiche: dopo la conferma la disposizione viene salvata.
 - Tutti i dati dell'utente sono salvati nel browser (IndexedDB). Il codice contiene solo servizi segnaposto.
-- Esportazione e importazione per pagina (JSON). L'importazione offre *integra* o *sostituisci tutto*; prima di ogni importazione lo stato precedente viene salvato internamente e può essere ripristinato dal pannello di importazione.
-- Interfaccia in italiano e in inglese; la lingua segue quella del browser (inglese se la lingua del browser non è disponibile). I servizi segnaposto sono nominati nella lingua dell'interfaccia.
-- Pannello facoltativo "Nerd Stats" (CPU, RAM, GPU, disco) alimentato da un piccolo server locale. Solo Windows.
+- Esportazione e importazione per pagina (JSON). L'importazione può essere eseguita in due modalità: INTEGRA o SOSTITUISCI TUTTO. Prima di ogni importazione lo stato precedente viene salvato internamente e può essere ripristinato dal pannello di importazione tramite la voce RIPRISTINA SALVATAGGIO PRECEDENTE.
+- Interfaccia in italiano e in inglese; la lingua segue quella impostata sul browser dell'utente (resta inglese se la lingua del browser non è supportata nel progetto). I servizi segnaposto sono nominati nella lingua dell'interfaccia.
+- Pannello facoltativo "Nerd Stats" (CPU, RAM, GPU, disco) alimentato da un piccolo server locale. Attualmente è stato testato ed è funzionante solo su Windows.
 - Disposizione a schermo intero con sette schede visibili per sezione.
 
 ## Avvio rapido
 
-1. Scarica o clona il repository.
-2. Apri `index.html` in un browser basato su Chromium (il progetto è testato in modo automatico su Chromium; gli altri browser non sono stati testati).
+1. Scarica o copia il repository.
+2. Apri `index.html` in un browser basato su Chromium (il progetto è stato testato in modo automatico su Chromium; gli altri browser non sono stati testati).
 3. Usa **Impostazioni > Modifica** per sostituire i servizi segnaposto con i tuoi.
 
 Non serve alcuna installazione. La pagina funziona anche da un server web locale, ma non è necessario.
@@ -26,7 +25,7 @@ Non serve alcuna installazione. La pagina funziona anche da un server web locale
 
 - Tutto ciò che aggiungi resta nel profilo del browser (database IndexedDB `ServiceWebpageDB`). Cancellare i dati del sito li elimina.
 - **Esporta con regolarità** (Impostazioni > Esporta). Il file di esportazione è l'unica copia fuori dal browser. Esportazioni e backup contengono l'elenco dei tuoi servizi: non pubblicarli. Il `.gitignore` di questo repository esclude già `service-webpage-page*.json` e `backup-*.json`.
-- Gli URL ammessi sono `http`, `https` o indirizzi relativi; le icone sono `http`, `https` o immagini incorporate. Gli altri schemi vengono rifiutati in aggiunta, modifica e importazione.
+- Gli URL ammessi sono `http`, `https` o indirizzi relativi; le icone sono `http`, `https`, immagini locali (percorso relativo) o immagini incorporate. Gli altri schemi vengono rifiutati in aggiunta, modifica e importazione.
 
 ## Nerd Stats (facoltativo, solo Windows)
 
@@ -43,7 +42,7 @@ Il progetto non ha strumenti di analisi e non invia dati all'autore. Il browser 
 - i caratteri (Orbitron, Oxanium) caricati da Google Fonts;
 - le icone dei servizi, quando usano il servizio favicon di Google (`google.com/s2/favicons`), che rivela a Google il dominio di ciascun servizio.
 
-Sostituisci quelle icone con immagini incorporate, oppure ospita i caratteri in locale, per evitare queste richieste. In entrambi i casi Google vede il tuo indirizzo IP.
+Sostituisci quelle icone con immagini locali e ospita i caratteri in locale, per evitare queste richieste.
 
 ## Note di sicurezza
 
@@ -57,7 +56,7 @@ Nessun sistema è privo di difetti. Questo elenco descrive ciò che è stato imp
 
 | Percorso | Contenuto |
 |---|---|
-| `index.html` | Guscio: barra di navigazione, effetti di sfondo, le due pagine come frame |
+| `index.html` | Pagina principale: barra di navigazione, effetti di sfondo, le due pagine incorporate come frame |
 | `Page_1/`, `Page_2/` | Le due pagine (HTML, CSS, JavaScript, sfondi) |
 | `i18n/` | Selettore di lingua e dizionari italiano / inglese |
 | `system-monitor/` | Server locale facoltativo delle statistiche e script di installazione per Windows |
@@ -79,8 +78,7 @@ Sviluppato con l'assistenza di strumenti di IA su indicazioni dell'autore. Gli s
 - L'autore non risponde di usi del software illeciti o contrari alla licenza, né di versioni modificate o opere derivate diffuse da terzi.
 - L'utente è responsabile dei contenuti che inserisce (nomi, indirizzi, icone), del rispetto delle leggi applicabili e dei termini dei servizi a cui rimanda.
 - Nomi, loghi e marchi di terzi appartengono ai rispettivi titolari; non si intende alcuna affiliazione o approvazione.
-- Le immagini generate con strumenti di IA possono somigliare a opere esistenti. L'autore non assicura che non violino diritti di terzi e chi le riutilizza lo fa a proprio rischio. Se ritieni che un'immagine violi i tuoi diritti, apri una Issue: la segnalazione sarà valutata e, se del caso, l'immagine rimossa.
-- Nulla in questo avviso limita responsabilità che la legge non consente di escludere o limitare.
+- Le immagini generate con strumenti di IA possono somigliare a opere esistenti. L'autore non assicura che non violino diritti di terzi e chi le riutilizza lo fa a proprio rischio.
 
 ## Contributi
 
