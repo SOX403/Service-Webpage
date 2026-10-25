@@ -4030,7 +4030,7 @@ async function refreshImportUndo() {
   importEl("import-undo-info").textContent = t("import.undo.info", {
     when: Number.isNaN(when.getTime()) ? "?" : when.toLocaleString(),
     action: t(actionKey),
-    n: Object.keys(entry.state.visibility).length,
+    n: Object.keys(entry.state.sections).length,
   });
 
   box.hidden = false;
@@ -4091,7 +4091,7 @@ async function runImportUndo() {
 
     importEl("import-report").appendChild(
       importLine(
-        t("import.undo.done", { n: Object.keys(entry.state.visibility).length }),
+        t("import.undo.done", { n: Object.keys(entry.state.sections).length }),
       ),
     );
 

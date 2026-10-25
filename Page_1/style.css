@@ -807,6 +807,17 @@ body:not(.edit-mode) .add-service-wrapper {
     color: #e8faff;
 }
 
+/* Long service names: at most two lines, then an ellipsis. */
+.service > span {
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+}
+
 /* =========================
    SERVICE ICONS
 ========================= */
@@ -850,16 +861,6 @@ body:not(.edit-mode) .add-service-wrapper {
 
 body.edit-mode .service {
     padding-right: 112px;
-}
-
-body.edit-mode .service > span {
-    min-width: 0;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
 }
 
 
