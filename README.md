@@ -83,3 +83,5 @@ Developed with the assistance of AI tools on the author's directions. The page b
 ## Contributing
 
 Reports and contributions are welcome. Open an Issue to report a problem or suggest a change; Pull Requests are accepted and may be declined. By submitting a contribution you confirm that you have the right to submit it and agree that it is distributed under the project license. Do not include personal data, exports or backups in Issues or Pull Requests.
+
+To report a security vulnerability, do not open a public Issue: use "Report a vulnerability" in the Security tab of the repository (private report).

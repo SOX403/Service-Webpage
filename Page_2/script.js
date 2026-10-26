@@ -48,7 +48,7 @@ document.addEventListener(
 
 const PROJECT_AUTHOR = "SOX";
 const PROJECT_NAME = "Service Webpage";
-const PROJECT_VERSION = "3.0.0";
+const PROJECT_VERSION = "3.0.1";
 const PROJECT_YEAR = "2026";
 const PROJECT_ID = "SOX-SERVICE-WEBPAGE-2026";
 

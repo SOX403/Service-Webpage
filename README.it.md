@@ -83,3 +83,5 @@ Sviluppato con l'assistenza di strumenti di IA su indicazioni dell'autore. Gli s
 ## Contributi
 
 Segnalazioni e contributi sono benvenuti. Apri una Issue per segnalare un problema o proporre una modifica; le Pull Request sono accettate e possono essere rifiutate. Inviando un contributo confermi di avere il diritto di farlo e accetti che sia distribuito con la licenza del progetto. Non includere dati personali, esportazioni o backup in Issue o Pull Request.
+
+Per segnalare una vulnerabilità di sicurezza non aprire una Issue pubblica: usa "Report a vulnerability" nella scheda Security del repository (segnalazione privata).

@@ -4,10 +4,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 Versions 1.0.0 to 2.0.0 were private development versions and were never published. Their entries were reconstructed by comparing the archived copies of each version; dates are the date of the most recent file in each copy.
 
-## [Unreleased]
+## [3.0.1] - 2026-10-26
+
+### Added
+- README (English and Italian): how to report a security vulnerability privately, using the repository's private vulnerability reporting.
 
 ### Changed
 - Long service names wrap on at most two lines with an ellipsis in normal use as well (previously only in edit mode).
+- The version shown in the credits is now 3.0.1.
 
 ### Fixed
 - The line shown before restoring the previous save, and the message shown after restoring it, reported the number of visibility entries instead of the number of services in the save.
