@@ -107,6 +107,9 @@
   "placeholder.ecommerce": "E-Commerce {n}",
   "placeholder.streaming": "Streaming {n}",
   "error.invalidCategory": "Invalid category.",
+  "sync.offline": "Saving to file unavailable: changes are kept in the browser only.",
+  "sync.refused": "File not updated: the server refused an empty state.",
+  "sync.conflict": "The file was changed elsewhere: reload the page to avoid overwriting newer data.",
 
   /* Import */
   "import.title": "IMPORT SAVE",

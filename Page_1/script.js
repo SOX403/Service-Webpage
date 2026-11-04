@@ -536,6 +536,11 @@ function saveEditedServices() {
 
 async function initializeDashboardStorage() {
 
+  /* Mirror of the state in a file (only when served by the local server). */
+  if (window.FileSync) {
+    await window.FileSync.init(STORAGE_PAGE_ID);
+  }
+
   await openDashboardDB();
 
   await loadEditedServices();
@@ -6017,7 +6022,8 @@ if (settingsLangZone) {
 
 
 const STORAGE_NERD_STATS = "nerdStatsEnabled_page1";
-const NERD_STATS_URL = "http://127.0.0.1:8765/stats";
+const NERD_STATS_URL =
+  (location.protocol === "http:" && location.port === "8765" ? location.origin : "http://127.0.0.1:8765") + "/stats";
 const NERD_STATS_INTERVAL_MS = 1000;
 
 const NERD_THRESHOLDS = {
@@ -6096,13 +6102,22 @@ async function fetchNerdStats() {
   }
 }
 
+/*
+   The polling runs only while the page is visible: in a hidden tab it stops
+   (no requests, and the stats server stops sampling after its idle time) and
+   it resumes, with an immediate update, when the tab is shown again.
+*/
+let nerdStatsWanted = false;
+
 function startNerdStatsPolling() {
-  if (nerdStatsTimer) return;
+  nerdStatsWanted = true;
+  if (nerdStatsTimer || document.hidden) return;
   fetchNerdStats();
   nerdStatsTimer = window.setInterval(fetchNerdStats, NERD_STATS_INTERVAL_MS);
 }
 
 function stopNerdStatsPolling() {
+  nerdStatsWanted = false;
   if (nerdStatsTimer) {
     window.clearInterval(nerdStatsTimer);
     nerdStatsTimer = null;
@@ -6110,6 +6125,18 @@ function stopNerdStatsPolling() {
   nerdStatsFailCount = 0;
   nerdStatsBar.classList.remove("unreachable");
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    if (nerdStatsTimer) {
+      window.clearInterval(nerdStatsTimer);
+      nerdStatsTimer = null;
+    }
+  } else if (nerdStatsWanted && !nerdStatsTimer) {
+    fetchNerdStats();
+    nerdStatsTimer = window.setInterval(fetchNerdStats, NERD_STATS_INTERVAL_MS);
+  }
+});
 
 function setNerdStatsEnabled(enabled, persist = true) {
   if (!nerdStatsBar) return;

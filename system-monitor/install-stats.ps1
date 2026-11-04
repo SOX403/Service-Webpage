@@ -119,6 +119,8 @@ if (Test-StatsServer) {
     Write-Host ''
     Write-Host "OK: service running at http://127.0.0.1:$Port/stats" -ForegroundColor Green
     Write-Host 'It will start by itself at every Windows logon.'
+    Write-Host "Dashboard:  http://127.0.0.1:$Port/"
+    Write-Host 'Dashboard data folder: see the README (config.example.json).'
 } else {
     Write-Host ''
     Write-Host 'WARNING: the service is not responding. Try running it manually:' -ForegroundColor Yellow
