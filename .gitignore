@@ -18,3 +18,10 @@ desktop.ini
 # User exports and backups (contain personal service lists)
 service-webpage-page*.json
 backup-*.json
+
+# Local configuration and data of the dashboard server (personal data)
+system-monitor/config.json
+ServiceWebpageData/
+/page1.json
+/page2.json
+/backups/

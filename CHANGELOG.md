@@ -4,6 +4,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 Versions 1.0.0 to 2.0.0 were private development versions and were never published. Their entries were reconstructed by comparing the archived copies of each version; dates are the date of the most recent file in each copy.
 
+## [Unreleased]
+
+### Added
+- Optional data files: when the dashboard is opened from the local server (`http://127.0.0.1:8765/`), its state is read from, and rewritten to, one file per page on the PC (with older copies), so it no longer depends on the browser's site data. A notice appears if the server cannot be reached.
+- `system-monitor/stats_server.py` now also serves the dashboard (only `index.html`, `Page_1/`, `Page_2/`, `i18n/`, `shared/`, `transition/`) and the data API, with strict same-origin, `Host` and header checks and atomic writes.
+- `system-monitor/config.example.json` to choose the data folder.
+
+### Changed
+- The Nerd Stats address follows the address the dashboard was opened from.
+
 ## [3.0.1] - 2026-10-26
 
 ### Added

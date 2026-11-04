@@ -109,6 +109,8 @@
   "placeholder.ecommerce": "E-Commerce {n}",
   "placeholder.streaming": "Streaming {n}",
   "error.invalidCategory": "Categoria non valida.",
+  "sync.offline": "Salvataggio su file non disponibile: le modifiche restano solo nel browser.",
+  "sync.refused": "File non aggiornato: il server ha rifiutato uno stato vuoto.",
 
   /* Import */
   "import.title": "IMPORTA SALVATAGGIO",

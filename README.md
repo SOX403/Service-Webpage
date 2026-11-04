@@ -27,6 +27,18 @@ No installation is required. The page also works from a local web server, but th
 - **Export regularly** (Settings > Export). The export file is the only copy outside the browser. Exports and backups contain your service list: do not publish them. The `.gitignore` of this repository already excludes `service-webpage-page*.json` and `backup-*.json`.
 - Accepted URLs are `http`, `https` or relative addresses; icons are `http`, `https`, local images (relative path) or embedded images. Other schemes are refused when adding, editing and importing.
 
+## Data in a file (optional, with the local server)
+
+When the dashboard is opened from the local server (`http://127.0.0.1:8765/`, the same server as Nerd Stats), its data are also kept in files on your PC and no longer depend on the browser's site data:
+
+- on opening, the file is read and restores the state; after every change the file is rewritten (about one second later);
+- one file per page (`page1.json`, `page2.json`) in the data folder, plus up to 30 older copies in its `backups` subfolder (at most one every 10 minutes);
+- the data folder is, in this order: the environment variable `SERVICE_WEBPAGE_DATA_DIR`, the `data_dir` value of `system-monitor/config.json` (copy `config.example.json`), or `ServiceWebpageData` in your user folder;
+- if the server cannot be reached, a notice appears and the changes stay in the browser until it is back; the server never replaces existing data with an empty state;
+- the browser stores a separate database for each address: the first time you use `http://127.0.0.1:8765/`, import your export once (Settings > Import).
+
+Install the server with `system-monitor/install-stats.bat` (Windows, Python 3) and set `http://127.0.0.1:8765/` as the browser's home or start page. Opened from a file (`file://`) the dashboard works as before, with the data in the browser only. The data files contain your service list: keep them outside the repository.
+
 ## Nerd Stats (optional, Windows only)
 
 The panel reads `http://127.0.0.1:8765/stats`, served by `system-monitor/stats_server.py` (Python 3, Windows API through `ctypes`).
@@ -49,6 +61,8 @@ Replace those icons with local images and self-host the fonts to avoid these req
 - User-typed and imported names, URLs and icons are validated; values read from storage are checked again before rendering. User data is never inserted as HTML.
 - Pages communicate only with their own frames; messages from other sources are ignored.
 - Content Security Policy limits `object`, `base` and `form` actions; no referrer is sent.
+- The local server listens on `127.0.0.1` only (not reachable from the network). It checks the `Host` header, and for the data API the origin of the request (same origin only, plus a custom header for writes), so pages of other websites cannot read or change your data. It serves only the dashboard's own page, style, script, image and font files, never exports, backups, configuration or data files. Data files are written atomically and an empty state never replaces existing data.
+- Limit: any program running on the same PC, and any other Windows account on it, can reach `127.0.0.1:8765` and read the dashboard data through the API, as a program running under your account can already read the data files. Browser extensions allowed on all sites could do the same.
 
 No system is free of defects. This list describes what was implemented, not a guarantee.
 
@@ -59,7 +73,8 @@ No system is free of defects. This list describes what was implemented, not a gu
 | `index.html` | Main page: navigation bar, background effects, the two pages embedded as frames |
 | `Page_1/`, `Page_2/` | The two pages (HTML, CSS, JavaScript, backgrounds) |
 | `i18n/` | Language router and Italian / English dictionaries |
-| `system-monitor/` | Optional local statistics server and its Windows install scripts |
+| `shared/` | Script that mirrors the dashboard data in a file (used only with the local server) |
+| `system-monitor/` | Optional local server (statistics, dashboard, data files) and its Windows install scripts |
 | `transition/` | Page-change effect image |
 
 ## License
