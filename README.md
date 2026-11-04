@@ -34,7 +34,7 @@ When the dashboard is opened from the local server (`http://127.0.0.1:8765/`, th
 - on opening, the file is read and restores the state; after every change the file is rewritten (about one second later);
 - one file per page (`page1.json`, `page2.json`) in the data folder, plus up to 30 older copies in its `backups` subfolder (at most one every 10 minutes);
 - the data folder is, in this order: the environment variable `SERVICE_WEBPAGE_DATA_DIR`, the `data_dir` value of `system-monitor/config.json` (copy `config.example.json`), or `ServiceWebpageData` in your user folder;
-- if the server cannot be reached, a notice appears and the changes stay in the browser until it is back; the server never replaces existing data with an empty state;
+- if the server cannot be reached, a notice appears and the changes stay in the browser until it is back; the server never replaces existing data with an empty state; a browser with no synchronisation history (for example after its site data was cleared) writes nothing until it has read the file, and the server refuses writes made on an outdated revision (409), so an emptied browser or an old tab cannot overwrite newer data;
 - the browser stores a separate database for each address: the first time you use `http://127.0.0.1:8765/`, import your export once (Settings > Import).
 
 Install the server with `system-monitor/install-stats.bat` (Windows, Python 3) and set `http://127.0.0.1:8765/` as the browser's home or start page. Opened from a file (`file://`) the dashboard works as before, with the data in the browser only. The data files contain your service list: keep them outside the repository.

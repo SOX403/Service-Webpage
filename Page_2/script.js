@@ -5094,7 +5094,7 @@ if (settingsLangZone) {
 
 const STORAGE_NERD_STATS = "nerdStatsEnabled_page2";
 const NERD_STATS_URL =
-  (location.protocol === "http:" ? location.origin : "http://127.0.0.1:8765") + "/stats";
+  (location.protocol === "http:" && location.port === "8765" ? location.origin : "http://127.0.0.1:8765") + "/stats";
 const NERD_STATS_INTERVAL_MS = 1000;
 
 const NERD_THRESHOLDS = {

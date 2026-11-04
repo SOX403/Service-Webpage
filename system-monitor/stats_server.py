@@ -36,10 +36,13 @@
 import ctypes
 import email.utils
 import json
+import math
 import mimetypes
 import os
 import re
 import shutil
+import socket
+import sys
 import threading
 import time
 import urllib.parse
@@ -704,32 +707,44 @@ def _prune_backups(page):
             pass
 
 
-def _backup_current(page):
-    # A copy of the file being replaced, at most one every
-    # BACKUP_MIN_INTERVAL_SECONDS.
+def _backup_current(page, force=False):
+    # A copy of the file being replaced: at most one every
+    # BACKUP_MIN_INTERVAL_SECONDS, unless force is set (the new content is
+    # much smaller than the old one). A backup failure never blocks a save.
     source = _state_path(page)
 
     if not os.path.exists(source):
         return
 
-    backup_dir = os.path.join(DATA_DIR, "backups")
-    os.makedirs(backup_dir, exist_ok=True)
+    try:
+        backup_dir = os.path.join(DATA_DIR, "backups")
+        os.makedirs(backup_dir, exist_ok=True)
 
-    newest = 0.0
+        newest = 0.0
 
-    for name in os.listdir(backup_dir):
-        if name.startswith(page + "_") and name.endswith(".json"):
-            try:
-                newest = max(newest, os.path.getmtime(os.path.join(backup_dir, name)))
-            except OSError:
-                pass
+        for name in os.listdir(backup_dir):
+            if name.startswith(page + "_") and name.endswith(".json"):
+                try:
+                    newest = max(newest, os.path.getmtime(os.path.join(backup_dir, name)))
+                except OSError:
+                    pass
 
-    if time.time() - newest < BACKUP_MIN_INTERVAL_SECONDS:
-        return
+        if not force and time.time() - newest < BACKUP_MIN_INTERVAL_SECONDS:
+            return
 
-    stamp = time.strftime("%Y%m%d_%H%M%S")
-    shutil.copy2(source, os.path.join(backup_dir, f"{page}_{stamp}.json"))
-    _prune_backups(page)
+        now = time.time()
+        stamp = time.strftime("%Y%m%d_%H%M%S", time.localtime(now)) + f"_{int(now * 1000) % 1000:03d}"
+        shutil.copyfile(source, os.path.join(backup_dir, f"{page}_{stamp}.json"))
+        _prune_backups(page)
+    except OSError:
+        pass
+
+
+def _entries_json(entries):
+    try:
+        return json.dumps(entries, ensure_ascii=True, allow_nan=False)
+    except (ValueError, RecursionError):
+        return ""
 
 
 def _write_state(page, incoming):
@@ -743,9 +758,18 @@ def _write_state(page, incoming):
     if not set(entries.keys()) <= _allowed_entry_keys(page):
         return 400, {"error": "invalid_keys"}
 
+    if not isinstance(entries.get(page), dict) and page in entries:
+        return 400, {"error": "invalid_state"}
+
     saved_at = incoming.get("savedAt")
 
-    if not isinstance(saved_at, (int, float)) or isinstance(saved_at, bool):
+    if not isinstance(saved_at, (int, float)) or isinstance(saved_at, bool) \
+            or not math.isfinite(saved_at):
+        return 400, {"error": "invalid_state"}
+
+    base_revision = incoming.get("baseRevision")
+
+    if not isinstance(base_revision, int) or isinstance(base_revision, bool) or base_revision < 0:
         return 400, {"error": "invalid_state"}
 
     with _data_lock:
@@ -760,11 +784,21 @@ def _write_state(page, incoming):
                 return 409, {"error": "refused_empty_state"}
 
             try:
-                revision = int(json.loads(previous.decode("utf-8")).get("revision", 0)) + 1
-            except (ValueError, AttributeError, TypeError):
-                revision = 1
+                current = int(json.loads(previous.decode("utf-8")).get("revision", 0))
+            except (ValueError, AttributeError, TypeError, RecursionError):
+                current = None
 
-            _backup_current(page)
+            # Optimistic concurrency: the writer must have read the current
+            # file. A browser with emptied site data (revision 0) or an old
+            # tab therefore cannot overwrite newer data; it must read first.
+            # An unreadable (corrupt) file does not block a rewrite.
+            if current is not None:
+                if base_revision != current:
+                    return 409, {"error": "revision_conflict", "revision": current}
+
+                revision = current + 1
+
+            _backup_current(page, force=len(_entries_json(entries)) < len(previous) // 2)
 
         document = {
             "app": "service-webpage",
@@ -775,7 +809,15 @@ def _write_state(page, incoming):
             "entries": entries,
         }
 
-        body = json.dumps(document, ensure_ascii=False, indent=1).encode("utf-8")
+        try:
+            body = json.dumps(
+                document, ensure_ascii=False, indent=1, allow_nan=False
+            ).encode("utf-8")
+        except UnicodeEncodeError:
+            # lone surrogate in a string: escape instead of failing
+            body = json.dumps(
+                document, ensure_ascii=True, indent=1, allow_nan=False
+            ).encode("ascii")
 
         target = _state_path(page)
         temporary = target + ".tmp"
@@ -998,7 +1040,10 @@ class StatsHandler(BaseHTTPRequestHandler):
 
         try:
             status, payload = _write_state(page, incoming)
-        except (OSError, RecursionError):
+        except ValueError:
+            self._send_json(400, {"error": "invalid_state"})
+            return
+        except Exception:
             self._send_json(500, {"error": "write_failed"})
             return
 
@@ -1011,8 +1056,12 @@ class StatsHandler(BaseHTTPRequestHandler):
             self._reject()
             return
 
-        with _data_lock:
-            data = _read_state_bytes(page)
+        try:
+            with _data_lock:
+                data = _read_state_bytes(page)
+        except OSError:
+            self._send_json(500, {"error": "read_failed"})
+            return
 
         if data is None:
             self._send_json(404, {"error": "not_found"})
@@ -1104,12 +1153,44 @@ class StatsHandler(BaseHTTPRequestHandler):
         pass
  
  
+class _ExclusiveServer(ThreadingHTTPServer):
+    # No SO_REUSEADDR: on Windows it would let another process bind the same
+    # port; SO_EXCLUSIVEADDRUSE (when available) forbids that explicitly.
+    allow_reuse_address = False
+    daemon_threads = True
+
+    def server_bind(self):
+        exclusive = getattr(socket, "SO_EXCLUSIVEADDRUSE", None)
+
+        if exclusive is not None:
+            self.socket.setsockopt(socket.SOL_SOCKET, exclusive, 1)
+
+        super().server_bind()
+
+
+def _inside_web_root(path):
+    try:
+        real = os.path.realpath(path)
+        return os.path.commonpath([real, WEB_ROOT]) == WEB_ROOT
+    except ValueError:
+        return False
+
+
 def main():
  
     updater = threading.Thread(target=_updater_loop, daemon=True)
     updater.start()
  
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), StatsHandler)
+    try:
+        server = _ExclusiveServer(("127.0.0.1", PORT), StatsHandler)
+    except OSError:
+        print(f"Port {PORT} is already in use: the server is probably already running.")
+        sys.exit(1)
+
+    if _inside_web_root(DATA_DIR):
+        print("The data folder must not be inside the dashboard folder:", DATA_DIR)
+        server.server_close()
+        sys.exit(1)
  
     print(f"Dashboard at http://127.0.0.1:{PORT}/")
     print(f"Dashboard stats active at http://127.0.0.1:{PORT}/stats")

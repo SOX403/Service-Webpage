@@ -26,7 +26,6 @@
   "use strict";
 
   var DB_NAME = "ServiceWebpageDB";
-  var DB_VERSION = 1;
   var STORE = "dashboardState";
   var API_PATH = "/api/state/";
   var SCHEMA = 1;
@@ -34,6 +33,8 @@
   var PUSH_DELAY_MS = 800;
   var RETRY_DELAY_MS = 10000;
   var PULL_TIMEOUT_MS = 3000;
+  var PUSH_TIMEOUT_MS = 15000;
+  var BLOCKED_RETRY_MS = 10000;
 
   var served =
     location.protocol === "http:" &&
@@ -58,12 +59,22 @@
   var lastSerialized = null;
   var badge = null;
 
+  /*
+     True when the browser state could not be compared with the file (server
+     unreachable on opening) and this browser has never synchronised before:
+     its content may be only the default state of an emptied browser, so
+     nothing is written to the file until the file has been read.
+  */
+  var blocked = false;
+  var retryPullTimer = null;
+  var hasSynced = false;
+
 
   /* ---------- IndexedDB helpers (own connection, original put) ---------- */
 
   function openDb() {
     return new Promise(function (resolve, reject) {
-      var request = indexedDB.open(DB_NAME, DB_VERSION);
+      var request = indexedDB.open(DB_NAME);
 
       request.onupgradeneeded = function (event) {
         var database = event.target.result;
@@ -80,6 +91,13 @@
         database.onversionchange = function () {
           database.close();
 
+          if (db === database) {
+            db = null;
+          }
+        };
+
+        /* Closed by the browser (site data cleared): reopen on next use. */
+        database.onclose = function () {
           if (db === database) {
             db = null;
           }
@@ -203,6 +221,12 @@
         "File not updated: the server refused an empty state."
       );
     }
+    else if (status === "conflict") {
+      text = translate(
+        "sync.conflict",
+        "The file was changed elsewhere: reload the page to avoid overwriting newer data."
+      );
+    }
 
     if (!text) {
       if (badge) {
@@ -304,7 +328,7 @@
   /* ---------- Writing the file ---------- */
 
   function schedulePush(delay) {
-    if (disabled) {
+    if (disabled || blocked) {
       return;
     }
 
@@ -316,7 +340,7 @@
   }
 
   function push(useKeepalive) {
-    if (disabled) {
+    if (disabled || blocked) {
       return Promise.resolve();
     }
 
@@ -341,7 +365,8 @@
           return saveMeta({
             dirty: needsPush,
             localSavedAt: Date.now(),
-            revision: lastRevision
+            revision: lastRevision,
+            hasSynced: true
           }).then(function () {
             setStatus("ok");
           });
@@ -353,6 +378,7 @@
           schema: SCHEMA,
           page: pageId,
           savedAt: savedAt,
+          baseRevision: lastRevision,
           entries: entries
         });
 
@@ -367,7 +393,17 @@
           credentials: "same-origin"
         };
 
-        if (useKeepalive && body.length < 60000) {
+        if (typeof AbortController === "function") {
+          var controller = new AbortController();
+
+          options.signal = controller.signal;
+          setTimeout(function () {
+            controller.abort();
+          }, PUSH_TIMEOUT_MS);
+        }
+
+        /* keepalive requests are limited to 64 KiB (bytes, not characters) */
+        if (useKeepalive && new TextEncoder().encode(body).length < 60000) {
           options.keepalive = true;
         }
 
@@ -380,6 +416,19 @@
           }
 
           if (response.status === 409) {
+            return response.json().then(function (info) {
+              setStatus(info && info.error === "revision_conflict" ? "conflict" : "refused");
+
+              return null;
+            }).catch(function () {
+              setStatus("refused");
+
+              return null;
+            });
+          }
+
+          if (response.status >= 400 && response.status < 500) {
+            /* permanent refusal (invalid or too large): do not retry */
             setStatus("refused");
 
             return null;
@@ -397,7 +446,8 @@
             return saveMeta({
               dirty: needsPush,
               localSavedAt: savedAt,
-              revision: lastRevision
+              revision: lastRevision,
+              hasSynced: true
             }).then(function () {
               setStatus("ok");
 
@@ -410,7 +460,11 @@
       })
       .catch(function () {
         setStatus("offline");
-        schedulePush(RETRY_DELAY_MS);
+
+        /* no timers in hidden tabs: resume() runs when the tab is visible */
+        if (document.visibilityState === "visible") {
+          schedulePush(RETRY_DELAY_MS);
+        }
       })
       .then(function () {
         pushing = false;
@@ -430,7 +484,8 @@
       saveMeta({
         dirty: true,
         localSavedAt: Date.now(),
-        revision: lastRevision
+        revision: lastRevision,
+        hasSynced: !blocked
       }).catch(function () {});
     }
 
@@ -471,10 +526,111 @@
     });
 
     document.addEventListener("visibilitychange", function () {
-      if (document.visibilityState === "hidden" && needsPush) {
-        clearTimeout(pushTimer);
-        push(true);
+      if (document.visibilityState === "hidden") {
+        clearTimeout(retryPullTimer);
+
+        if (needsPush) {
+          clearTimeout(pushTimer);
+          push(true);
+        }
       }
+      else {
+        resume();
+      }
+    });
+
+    window.addEventListener("online", resume);
+  }
+
+  function resume() {
+    if (disabled) {
+      return;
+    }
+
+    if (blocked) {
+      tryUnblock();
+    }
+    else if (needsPush) {
+      schedulePush(0);
+    }
+  }
+
+  /*
+     Blocked mode: the file could not be read on opening and this browser
+     has no synchronisation history. Read the file as soon as it answers;
+     the local content is kept aside before being replaced.
+  */
+  function scheduleUnblock() {
+    clearTimeout(retryPullTimer);
+
+    if (document.visibilityState !== "visible") {
+      return;
+    }
+
+    retryPullTimer = setTimeout(tryUnblock, BLOCKED_RETRY_MS);
+  }
+
+  function tryUnblock() {
+    if (!blocked || disabled) {
+      return;
+    }
+
+    clearTimeout(retryPullTimer);
+
+    fetchRemote().then(function (remote) {
+      if (!blocked) {
+        return null;
+      }
+
+      if (remote.status === "unavailable") {
+        disabled = true;
+        setStatus("off");
+
+        return null;
+      }
+
+      if (remote.status === "offline") {
+        scheduleUnblock();
+
+        return null;
+      }
+
+      if (remote.status === "missing") {
+        blocked = false;
+        needsPush = true;
+        lastRevision = 0;
+        schedulePush(PUSH_DELAY_MS);
+
+        return null;
+      }
+
+      return readEntries()
+        .then(function (entries) {
+          var values = {};
+
+          values[pageId + "_unsyncedBackup"] = {
+            savedAt: Date.now(),
+            entries: entries
+          };
+
+          return idbPutAll(values, []);
+        })
+        .then(function () {
+          return applyRemote(remote.data);
+        })
+        .then(function () {
+          return saveMeta({
+            dirty: false,
+            localSavedAt: remote.data.savedAt || 0,
+            revision: remote.data.revision || 0,
+            hasSynced: true
+          });
+        })
+        .then(function () {
+          location.reload();
+        });
+    }).catch(function () {
+      scheduleUnblock();
     });
   }
 
@@ -506,6 +662,7 @@
         var remote = results[1];
 
         lastRevision = meta.revision || 0;
+        hasSynced = meta.hasSynced === true;
 
         if (remote.status === "unavailable") {
           disabled = true;
@@ -516,7 +673,14 @@
 
         if (remote.status === "offline") {
           setStatus("offline");
-          schedulePush(RETRY_DELAY_MS);
+
+          if (!hasSynced) {
+            blocked = true;
+            scheduleUnblock();
+          }
+          else if (document.visibilityState === "visible") {
+            schedulePush(RETRY_DELAY_MS);
+          }
 
           return "offline";
         }
@@ -524,6 +688,8 @@
         if (remote.status === "missing") {
           /* No file yet: the current state (if any) becomes the file. */
           return idbGet(pageId).then(function (local) {
+            lastRevision = 0;
+
             if (local) {
               needsPush = true;
               schedulePush(PUSH_DELAY_MS);
@@ -536,12 +702,15 @@
         }
 
         var localIsNewer =
+          hasSynced &&
+          meta.revision > 0 &&
           meta.dirty === true &&
           typeof remote.data.savedAt === "number" &&
           meta.localSavedAt > remote.data.savedAt;
 
         if (localIsNewer) {
           /* Changes made while the server was unreachable: keep them. */
+          lastRevision = remote.data.revision || 0;
           needsPush = true;
           schedulePush(PUSH_DELAY_MS);
           setStatus("ok");
@@ -561,7 +730,8 @@
             return saveMeta({
               dirty: false,
               localSavedAt: remote.data.savedAt || 0,
-              revision: lastRevision
+              revision: lastRevision,
+              hasSynced: true
             });
           })
           .then(function () {
@@ -573,6 +743,11 @@
       .catch(function () {
         try {
           setStatus("offline");
+
+          if (!hasSynced) {
+            blocked = true;
+            scheduleUnblock();
+          }
         }
         catch (error) {
           /* ignored */

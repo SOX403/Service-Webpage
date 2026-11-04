@@ -34,7 +34,7 @@ Quando la dashboard è aperta dal server locale (`http://127.0.0.1:8765/`, lo st
 - all'apertura il file viene letto e ripristina lo stato; a ogni modifica il file viene riscritto (circa un secondo dopo);
 - un file per pagina (`page1.json`, `page2.json`) nella cartella dei dati, più fino a 30 copie precedenti nella sottocartella `backups` (al massimo una ogni 10 minuti);
 - la cartella dei dati è, in ordine: la variabile d'ambiente `SERVICE_WEBPAGE_DATA_DIR`, il valore `data_dir` di `system-monitor/config.json` (copia `config.example.json`), oppure `ServiceWebpageData` nella cartella utente;
-- se il server non è raggiungibile compare un avviso e le modifiche restano nel browser finché non torna disponibile; il server non sostituisce mai dati esistenti con uno stato vuoto;
+- se il server non è raggiungibile compare un avviso e le modifiche restano nel browser finché non torna disponibile; il server non sostituisce mai dati esistenti con uno stato vuoto; un browser senza storia di sincronizzazione (ad esempio dopo la cancellazione dei dati del sito) non scrive nulla finché non ha letto il file, e il server rifiuta le scritture basate su una revisione superata (409): un browser svuotato o una scheda vecchia non possono sovrascrivere dati più recenti;
 - il browser conserva un database separato per ogni indirizzo: la prima volta che usi `http://127.0.0.1:8765/`, importa una volta il tuo export (Impostazioni > Importa).
 
 Installa il server con `system-monitor/install-stats.bat` (Windows, Python 3) e imposta `http://127.0.0.1:8765/` come pagina iniziale del browser. Aperta da file (`file://`) la dashboard funziona come prima, con i dati solo nel browser. I file di dati contengono il tuo elenco di servizi: tienili fuori dal repository.
