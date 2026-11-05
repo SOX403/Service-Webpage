@@ -8,11 +8,16 @@ Versions 1.0.0 to 2.0.0 were private development versions and were never publish
 
 ### Added
 - Optional data files: when the dashboard is opened from the local server (`http://127.0.0.1:8765/`), its state is read from, and rewritten to, one file per page on the PC (with older copies), so it no longer depends on the browser's site data. A notice appears if the server cannot be reached.
+- Protection against overwriting newer data: every write carries the revision it was based on and the server answers `409` if the file has changed since (a notice asks to reload the page). A browser with no synchronisation history, for example with its site data cleared, writes nothing until it has read the file; its previous content is kept under the `*_unsyncedBackup` key.
+- The server exits with a message if port 8765 is already in use, binds the port exclusively and refuses a data folder inside the dashboard folder.
 - `system-monitor/stats_server.py` now also serves the dashboard (only `index.html`, `Page_1/`, `Page_2/`, `i18n/`, `shared/`, `transition/`) and the data API, with strict same-origin, `Host` and header checks and atomic writes.
 - `system-monitor/config.example.json` to choose the data folder.
 
 ### Changed
-- The Nerd Stats address follows the address the dashboard was opened from.
+- The Nerd Stats address follows the address the dashboard was opened from only when that is the local server (port 8765); with any other server (for example Live Server) it stays `http://127.0.0.1:8765/stats`.
+- Backups are named with milliseconds, are always taken before a write that shrinks the data a lot, and a backup failure no longer blocks a save.
+- No retry timers run in background tabs: retries resume when the tab is visible again or the network returns; permanent refusals (invalid or too large data) are not retried.
+- Invalid values (NaN, lone surrogate characters) in a save no longer break the request.
 
 ## [3.0.1] - 2026-10-26
 
