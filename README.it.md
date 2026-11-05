@@ -39,13 +39,13 @@ Quando la dashboard è aperta dal server locale (`http://127.0.0.1:8765/`, lo st
 - la cartella dei dati non deve trovarsi dentro la cartella della dashboard (il server non si avvia);
 - il browser conserva un database separato per ogni indirizzo: la prima volta che usi `http://127.0.0.1:8765/`, importa una volta il tuo export (Impostazioni > Importa).
 
-Installa il server con `system-monitor/install-stats.bat` (Windows, Python 3) e imposta `http://127.0.0.1:8765/` come pagina iniziale del browser. Aperta da file (`file://`) la dashboard funziona come prima, con i dati solo nel browser. I file di dati contengono il tuo elenco di servizi: tienili fuori dal repository.
+Installa il server con `system-monitor/install-stats.bat` (Windows, Python 3) e imposta `http://127.0.0.1:8765/` come pagina iniziale del browser. Aperta da file (`file://`) la dashboard funziona come prima, con i dati solo nel browser. Il salvataggio su file è stato provato su Windows (e, con le parti specifiche di Windows simulate, in un ambiente di test Linux); su altri sistemi non è verificato e il server si può avviare a mano con `python system-monitor/stats_server.py`. I file di dati contengono il tuo elenco di servizi: tienili fuori dal repository.
 
 ## Nerd Stats (facoltativo, solo Windows)
 
 Il pannello legge `http://127.0.0.1:8765/stats`, servito da `system-monitor/stats_server.py` (Python 3, API di Windows tramite `ctypes`).
 
-- `system-monitor/install-stats.bat` registra un'attività pianificata che avvia il server a ogni accesso a Windows; `uninstall-stats.bat` la rimuove.
+- `system-monitor/install-stats.bat` registra un'attività pianificata che avvia il server a ogni accesso a Windows; `uninstall-stats.bat` la rimuove. L'attività esegue lo `stats_server.py` della cartella da cui è stato lanciato lo script: se sposti o rinomini la cartella del progetto, riesegui `install-stats.bat`.
 - Il server ascolta solo sull'indirizzo di loopback e accetta le richieste del cruscotto locale (origine `null` per i file, oppure `127.0.0.1` / `localhost`) con intestazione `Host` coerente. Ogni altra origine riceve `403`.
 - Si può avviare anche manualmente: `python system-monitor/stats_server.py`.
 
