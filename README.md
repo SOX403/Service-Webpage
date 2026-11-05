@@ -35,6 +35,8 @@ When the dashboard is opened from the local server (`http://127.0.0.1:8765/`, th
 - one file per page (`page1.json`, `page2.json`) in the data folder, plus up to 30 older copies in its `backups` subfolder (at most one every 10 minutes);
 - the data folder is, in this order: the environment variable `SERVICE_WEBPAGE_DATA_DIR`, the `data_dir` value of `system-monitor/config.json` (copy `config.example.json`), or `ServiceWebpageData` in your user folder;
 - if the server cannot be reached, a notice appears and the changes stay in the browser until it is back; the server never replaces existing data with an empty state; a browser with no synchronisation history (for example after its site data was cleared) writes nothing until it has read the file, and the server refuses writes made on an outdated revision (409), so an emptied browser or an old tab cannot overwrite newer data;
+- if another tab or browser has changed the file in the meantime, a notice asks you to reload the page; the previous content of a browser that had to be replaced by the file is kept in the browser under `<page>_unsyncedBackup`;
+- the data folder must not be inside the dashboard folder (the server refuses to start);
 - the browser stores a separate database for each address: the first time you use `http://127.0.0.1:8765/`, import your export once (Settings > Import).
 
 Install the server with `system-monitor/install-stats.bat` (Windows, Python 3) and set `http://127.0.0.1:8765/` as the browser's home or start page. Opened from a file (`file://`) the dashboard works as before, with the data in the browser only. The data files contain your service list: keep them outside the repository.
@@ -61,7 +63,7 @@ Replace those icons with local images and self-host the fonts to avoid these req
 - User-typed and imported names, URLs and icons are validated; values read from storage are checked again before rendering. User data is never inserted as HTML.
 - Pages communicate only with their own frames; messages from other sources are ignored.
 - Content Security Policy limits `object`, `base` and `form` actions; no referrer is sent.
-- The local server listens on `127.0.0.1` only (not reachable from the network). It checks the `Host` header, and for the data API the origin of the request (same origin only, plus a custom header for writes), so pages of other websites cannot read or change your data. It serves only the dashboard's own page, style, script, image and font files, never exports, backups, configuration or data files. Data files are written atomically and an empty state never replaces existing data.
+- The local server listens on `127.0.0.1` only (not reachable from the network). It checks the `Host` header, and for the data API the origin of the request (same origin only, plus a custom header for writes), so pages of other websites cannot read or change your data. It serves only the dashboard's own page, style, script, image and font files, never exports, backups, configuration or data files. Data files are written atomically, an empty state never replaces existing data, and a write based on an outdated revision is refused.
 - Limit: any program running on the same PC, and any other Windows account on it, can reach `127.0.0.1:8765` and read the dashboard data through the API, as a program running under your account can already read the data files. Browser extensions allowed on all sites could do the same.
 
 No system is free of defects. This list describes what was implemented, not a guarantee.
