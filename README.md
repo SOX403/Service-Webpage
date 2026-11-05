@@ -39,13 +39,13 @@ When the dashboard is opened from the local server (`http://127.0.0.1:8765/`, th
 - the data folder must not be inside the dashboard folder (the server refuses to start);
 - the browser stores a separate database for each address: the first time you use `http://127.0.0.1:8765/`, import your export once (Settings > Import).
 
-Install the server with `system-monitor/install-stats.bat` (Windows, Python 3) and set `http://127.0.0.1:8765/` as the browser's home or start page. Opened from a file (`file://`) the dashboard works as before, with the data in the browser only. The data files contain your service list: keep them outside the repository.
+Install the server with `system-monitor/install-stats.bat` (Windows, Python 3) and set `http://127.0.0.1:8765/` as the browser's home or start page. Opened from a file (`file://`) the dashboard works as before, with the data in the browser only. Saving to files has been tested on Windows (and, with the Windows-specific parts simulated, in a Linux test environment); it is not verified on other systems, where the server can be started manually with `python system-monitor/stats_server.py`. The data files contain your service list: keep them outside the repository.
 
 ## Nerd Stats (optional, Windows only)
 
 The panel reads `http://127.0.0.1:8765/stats`, served by `system-monitor/stats_server.py` (Python 3, Windows API through `ctypes`).
 
-- `system-monitor/install-stats.bat` registers a scheduled task that starts the server at every Windows logon; `uninstall-stats.bat` removes it.
+- `system-monitor/install-stats.bat` registers a scheduled task that starts the server at every Windows logon; `uninstall-stats.bat` removes it. The task runs the `stats_server.py` of the folder from which the script was run: if you move or rename the project folder, run `install-stats.bat` again.
 - The server listens on the loopback address only and accepts requests from the local dashboard (origin `null` for files, or `127.0.0.1` / `localhost`) with a matching `Host` header. Any other origin gets `403`.
 - It can also be started manually: `python system-monitor/stats_server.py`.
 
