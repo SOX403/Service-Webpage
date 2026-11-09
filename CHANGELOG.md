@@ -4,7 +4,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 Versions 1.0.0 to 2.0.0 were private development versions and were never published. Their entries were reconstructed by comparing the archived copies of each version; dates are the date of the most recent file in each copy.
 
-## [Unreleased]
+## [3.1.0] - 2026-11-07
 
 ### Added
 - Optional data files: when the dashboard is opened from the local server (`http://127.0.0.1:8765/`), its state is read from, and rewritten to, one file per page on the PC (with older copies), so it no longer depends on the browser's site data. A notice appears if the server cannot be reached.
@@ -18,6 +18,7 @@ Versions 1.0.0 to 2.0.0 were private development versions and were never publish
 - Backups are named with milliseconds, are always taken before a write that shrinks the data a lot, and a backup failure no longer blocks a save.
 - No retry timers run in background tabs: retries resume when the tab is visible again or the network returns; permanent refusals (invalid or too large data) are not retried.
 - Invalid values (NaN, lone surrogate characters) in a save no longer break the request.
+- The version shown in the credits is now 3.1.0.
 
 ## [3.0.1] - 2026-10-26
 
