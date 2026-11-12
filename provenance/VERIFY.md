@@ -1,10 +1,10 @@
 # Provenance and verification
 
-This folder documents the integrity and authorship evidence for release **v3.0.1**.
+This folder documents the integrity and authorship evidence for release **v3.1.0**.
 
 | File | Content |
 |---|---|
-| `SHA256SUMS` | SHA-256 hash of each of the 27 files of the tagged tree `v3.0.1` (`sha256sum` format) |
+| `SHA256SUMS` | SHA-256 hash of each of the 29 files of the tagged tree `v3.1.0` (`sha256sum` format) |
 | `SHA256SUMS.sig` | SSH signature (namespace `file`) of `SHA256SUMS` |
 | `allowed_signers` | Public key used for the signature (public key only) |
 | `SHA256SUMS.ots` | OpenTimestamps proof for `SHA256SUMS` |
@@ -12,7 +12,9 @@ This folder documents the integrity and authorship evidence for release **v3.0.1
 | `COMMITMENT.txt.ots` | OpenTimestamps proof for `COMMITMENT.txt` |
 | `SHA256SUMS_versioni.txt` / `.ots` | Hash list of an archive of earlier versions (the archive itself is not published) and its OpenTimestamps proof |
 
-The hashes in `SHA256SUMS` refer to the tree at tag `v3.0.1`. Files on `main` that changed after the tag will not match.
+The hashes in `SHA256SUMS` refer to the tree at tag `v3.1.0`. Files on `main` that changed after the tag will not match.
+
+The evidence for the earlier release `v3.0.1` (27 files) remains attached to its own GitHub Release.
 
 ## 1. Verify the signature
 
@@ -26,7 +28,7 @@ Expected output: `Good "file" signature for SOX403 with ED25519 key SHA256:U8XB0
 
 ## 2. Verify the files of the release
 
-1. Download the source archive of tag `v3.0.1` from the GitHub Release and extract it.
+1. Download the source archive of tag `v3.1.0` from the GitHub Release and extract it.
 2. Run from inside the extracted folder, with the path of `SHA256SUMS` adjusted:
 
 ```
